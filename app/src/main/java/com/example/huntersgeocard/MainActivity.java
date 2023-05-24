@@ -162,6 +162,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         loadGeoJsonData();
+                        loadGeoJsonData2();
                     }
                 })
                 .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
@@ -174,6 +175,17 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         dialog.show();
     }
     private void loadGeoJsonData(){
+        KmlDocument kmlDocument = new KmlDocument();
+        Drawable defaultMarker = getResources().getDrawable(org.osmdroid.bonuspack.R.drawable.marker_default);
+        Bitmap defaultBitmap = ((BitmapDrawable) defaultMarker).getBitmap();
+        Style defaultStyle = new Style(defaultBitmap, 0x901010AA, 5f, 0x20AA1010);
+        kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.bmo), null);
+        FolderOverlay geoJsonOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(mMapView, defaultStyle, null, kmlDocument);
+        mMapView.getOverlays().add(geoJsonOverlay);
+        mMapView.invalidate();
+    }
+
+    private void loadGeoJsonData2(){
         KmlDocument kmlDocument = new KmlDocument();
         Drawable defaultMarker = getResources().getDrawable(org.osmdroid.bonuspack.R.drawable.marker_default);
         Bitmap defaultBitmap = ((BitmapDrawable) defaultMarker).getBitmap();
