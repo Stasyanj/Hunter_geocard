@@ -5,7 +5,6 @@ plugins {
 android {
     namespace 'com.example.huntersgeocard'
     compileSdk 33
-
     defaultConfig {
         applicationId "com.example.huntersgeocard"
         minSdk 21
@@ -35,6 +34,7 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'org.osmdroid:osmdroid-android:6.1.16'
     implementation 'com.google.android.gms:play-services-maps:18.1.0'
+    implementation 'com.github.MKergall:osmbonuspack:6.9.0'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'

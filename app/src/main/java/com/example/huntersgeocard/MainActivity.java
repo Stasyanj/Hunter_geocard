@@ -6,21 +6,30 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 
 import org.osmdroid.api.IMapController;
+import org.osmdroid.bonuspack.kml.KmlDocument;
+import org.osmdroid.bonuspack.kml.Style;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
@@ -32,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private Marker currentLocationMarker;
     private LocationManager locationManager;
     private ImageButton btnLocate;
+    private Button buttoncheckmap;
 
 
     @Override
@@ -53,6 +63,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             @Override
             public void onClick(View v) {
                 requestLocationUpdates();
+            }
+        });
+        buttoncheckmap = findViewById(R.id.checkbox);
+        buttoncheckmap.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showCheckboxDialog();
             }
         });
     }
@@ -120,5 +137,41 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                         PERMISSION_REQUEST_CODE);
             }
         }
+    }
+
+    private void showCheckboxDialog() {
+        final String[] items = {"Зона А", "Зона Б", "Зона В", "Зона Г"};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Выберите пункты").setMultiChoiceItems(items, null, new DialogInterface.OnMultiChoiceClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+
+                    }
+                })
+                .setPositiveButton("Готово", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        loadGeoJsonData();
+                    }
+                })
+                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+    private void loadGeoJsonData(){
+        KmlDocument kmlDocument = new KmlDocument();
+        KmlDocument.parseGeoJSON(geoJsonString);
+        Drawable defaultMarker = getResources().getDrawable(org.osmdroid.bonuspack.R.drawable.marker_default);
+        Bitmap defaultBitmap = ((BitmapDrawable) defaultMarker).getBitmap();
+        Style defaultStyle = new Style(defaultBitmap, 0x901010AA, 5f, 0x20AA1010);
+        FolderOverlay geoJsonOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(mMapView, defaultStyle, null, kmlDocument);
+        mMapView.getOverlays().add(geoJsonOverlay);
+        mMapView.invalidate();
     }
 }
