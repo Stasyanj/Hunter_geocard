@@ -34,6 +34,15 @@ import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
+
 public class MainActivity extends AppCompatActivity implements LocationListener {
     private static final int PERMISSION_REQUEST_CODE = 1;
     private MapView mMapView;
@@ -166,12 +175,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     }
     private void loadGeoJsonData(){
         KmlDocument kmlDocument = new KmlDocument();
-        KmlDocument.parseGeoJSON(geoJsonString);
         Drawable defaultMarker = getResources().getDrawable(org.osmdroid.bonuspack.R.drawable.marker_default);
         Bitmap defaultBitmap = ((BitmapDrawable) defaultMarker).getBitmap();
         Style defaultStyle = new Style(defaultBitmap, 0x901010AA, 5f, 0x20AA1010);
+        kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.amo), null);
         FolderOverlay geoJsonOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(mMapView, defaultStyle, null, kmlDocument);
         mMapView.getOverlays().add(geoJsonOverlay);
         mMapView.invalidate();
     }
+
 }
