@@ -43,157 +43,24 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 
-public class MainActivity extends AppCompatActivity implements LocationListener {
-    private static final int PERMISSION_REQUEST_CODE = 1;
-    private MapView mMapView;
-    private IMapController mapController;
-    private Marker currentLocationMarker;
-    private LocationManager locationManager;
-    private ImageButton btnLocate;
-    private Button buttoncheckmap;
-
+public class MainActivity extends AppCompatActivity  {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        Context ctx = getApplicationContext();
-        Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-        mMapView = findViewById(R.id.mapView);
-        mMapView.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE);
-        mMapView.setBuiltInZoomControls(true);
-        mMapView.setMultiTouchControls(true);
-        mapController = mMapView.getController();
-        mapController.setZoom(10);
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        setContentView(R.layout.activity_menu);
 
-        btnLocate = findViewById(R.id.btnLocate);
-        btnLocate.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                requestLocationUpdates();
-            }
-        });
-        buttoncheckmap = findViewById(R.id.checkbox);
-        buttoncheckmap.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showCheckboxDialog();
-            }
-        });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (locationManager != null) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-            } else {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        PERMISSION_REQUEST_CODE);
-            }
-        }
+
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (locationManager != null) {
-            locationManager.removeUpdates(this);
-        }
+
     }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        double latitude = location.getLatitude();
-        double longitude = location.getLongitude();
-        GeoPoint startPoint = new GeoPoint(latitude, longitude);
-
-        if (currentLocationMarker == null) {
-            currentLocationMarker = new Marker(mMapView);
-            mMapView.getOverlays().add(currentLocationMarker);
-        }
-
-        currentLocationMarker.setPosition(startPoint);
-        mapController.setCenter(startPoint);
-        mMapView.invalidate();
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-    }
-
-    private void requestLocationUpdates() {
-        if (locationManager != null) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                if (location != null) {
-                    onLocationChanged(location);
-                }
-            } else {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        PERMISSION_REQUEST_CODE);
-            }
-        }
-    }
-
-    private void showCheckboxDialog() {
-        final String[] items = {"Зона А", "Зона Б", "Зона В", "Зона Г"};
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Выберите пункты").setMultiChoiceItems(items, null, new DialogInterface.OnMultiChoiceClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-
-                    }
-                })
-                .setPositiveButton("Готово", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        loadGeoJsonData();
-                        loadGeoJsonData2();
-                    }
-                })
-                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
-        AlertDialog dialog = builder.create();
-        dialog.show();
-    }
-    private void loadGeoJsonData(){
-        KmlDocument kmlDocument = new KmlDocument();
-        Drawable defaultMarker = getResources().getDrawable(org.osmdroid.bonuspack.R.drawable.marker_default);
-        Bitmap defaultBitmap = ((BitmapDrawable) defaultMarker).getBitmap();
-        Style defaultStyle = new Style(defaultBitmap, 0x901010AA, 5f, 0x20AA1010);
-        kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.bmo), null);
-        FolderOverlay geoJsonOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(mMapView, defaultStyle, null, kmlDocument);
-        mMapView.getOverlays().add(geoJsonOverlay);
-        mMapView.invalidate();
-    }
-
-    private void loadGeoJsonData2(){
-        KmlDocument kmlDocument = new KmlDocument();
-        Drawable defaultMarker = getResources().getDrawable(org.osmdroid.bonuspack.R.drawable.marker_default);
-        Bitmap defaultBitmap = ((BitmapDrawable) defaultMarker).getBitmap();
-        Style defaultStyle = new Style(defaultBitmap, 0x901010AA, 5f, 0x20AA1010);
-        kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.amo), null);
-        FolderOverlay geoJsonOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(mMapView, defaultStyle, null, kmlDocument);
-        mMapView.getOverlays().add(geoJsonOverlay);
-        mMapView.invalidate();
-    }
-
 }
