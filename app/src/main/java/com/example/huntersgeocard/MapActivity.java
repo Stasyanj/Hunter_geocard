@@ -3,14 +3,20 @@ package com.example.huntersgeocard;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -19,6 +25,21 @@ import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.Context;
+import android.database.ContentObserver;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteException;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.provider.BaseColumns;
+import android.text.TextUtils;
+import android.util.Log;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.kml.KmlDocument;
@@ -27,8 +48,9 @@ import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.views.overlay.FolderOverlay;
+
 
 public class MapActivity extends AppCompatActivity implements LocationListener {
     private static final int PERMISSION_REQUEST_CODE = 1;
@@ -37,7 +59,7 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
     private Marker currentLocationMarker;
     private LocationManager locationManager;
     private ImageButton btnLocate;
-    private Button buttoncheckmap;
+    private ImageButton btnLayer;
 
 
     @Override
@@ -45,29 +67,36 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Context ctx = getApplicationContext();
-        Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
+        //Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
+        Configuration.getInstance().setUserAgentValue(String.valueOf(ctx));
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
         mMapView = findViewById(R.id.mapView);
         mMapView.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE);
-        mMapView.setBuiltInZoomControls(true);
         mMapView.setMultiTouchControls(true);
         mapController = mMapView.getController();
-        mapController.setZoom(10);
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
+        mapController.setZoom(11);
         btnLocate = findViewById(R.id.btnLocate);
+        GeoPoint PrimaryPoint = new GeoPoint(53.91081, 27.58667);
+        mapController.setCenter(PrimaryPoint);
         btnLocate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
                 requestLocationUpdates();
             }
         });
-        buttoncheckmap = findViewById(R.id.checkbox);
-        buttoncheckmap.setOnClickListener(new View.OnClickListener() {
+        btnLayer = findViewById(R.id.btnLayer);
+        btnLayer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showCheckboxDialog();
             }
         });
+
     }
 
     @Override
@@ -97,12 +126,10 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         double latitude = location.getLatitude();
         double longitude = location.getLongitude();
         GeoPoint startPoint = new GeoPoint(latitude, longitude);
-
         if (currentLocationMarker == null) {
             currentLocationMarker = new Marker(mMapView);
             mMapView.getOverlays().add(currentLocationMarker);
         }
-
         currentLocationMarker.setPosition(startPoint);
         mapController.setCenter(startPoint);
         mMapView.invalidate();
@@ -148,8 +175,7 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
                 .setPositiveButton("Готово", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        loadGeoJsonData();
-                        loadGeoJsonData2();
+                        loadGeoData();
                     }
                 })
                 .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
@@ -161,18 +187,15 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         AlertDialog dialog = builder.create();
         dialog.show();
     }
-    private void loadGeoJsonData(){
-        KmlDocument kmlDocument = new KmlDocument();
-        Drawable defaultMarker = getResources().getDrawable(org.osmdroid.bonuspack.R.drawable.marker_default);
-        Bitmap defaultBitmap = ((BitmapDrawable) defaultMarker).getBitmap();
-        Style defaultStyle = new Style(defaultBitmap, 0x901010AA, 5f, 0x20AA1010);
-        kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.bmo), null);
-        FolderOverlay geoJsonOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(mMapView, defaultStyle, null, kmlDocument);
-        mMapView.getOverlays().add(geoJsonOverlay);
-        mMapView.invalidate();
-    }
 
-    private void loadGeoJsonData2(){
+   // private void attachExternalDB() {
+     //   File extStore = Environment.getExternalStorageDirectory();
+      //  File extDbFile = new File(extStore.getAbsolutePath() + "/" + "parma-dxf.sqlite");
+      //  if (!extDbFile.exists()) {
+      //      throw new RuntimeException("Cannot find external DB " + extDbFile.getPath() + ". Probably external SD card is not mounted");
+     //   }
+  //  }
+    private void loadGeoData() {
         KmlDocument kmlDocument = new KmlDocument();
         Drawable defaultMarker = getResources().getDrawable(org.osmdroid.bonuspack.R.drawable.marker_default);
         Bitmap defaultBitmap = ((BitmapDrawable) defaultMarker).getBitmap();
@@ -183,4 +206,8 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         mMapView.invalidate();
     }
 
+    public void onBackPressed(){
+        Intent exit_intent = new Intent(MapActivity.this, MainActivity.class);
+        startActivity(exit_intent);
+    }
 }

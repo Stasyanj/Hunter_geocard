@@ -1,66 +1,47 @@
 package com.example.huntersgeocard;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
-import android.Manifest;
-import android.app.AlertDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
+import android.content.Intent;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton;
-
-import org.osmdroid.api.IMapController;
-import org.osmdroid.bonuspack.kml.KmlDocument;
-import org.osmdroid.bonuspack.kml.Style;
-import org.osmdroid.config.Configuration;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
-import org.osmdroid.util.GeoPoint;
-import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.FolderOverlay;
-import org.osmdroid.views.overlay.Marker;
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
 
 public class MainActivity extends AppCompatActivity  {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+        if (savedInstanceState == null) {
+            super.onCreate(savedInstanceState);
+        }
+    }
+    @Override
+    protected void onStart() {
+        super.onStart();
         setContentView(R.layout.activity_menu);
-
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-
+        Intent myIntentMap = new Intent(MainActivity.this, MapActivity.class);
+        Intent myIntent_about = new Intent(MainActivity.this, AboutApp.class);
+        Button button_exit = (Button)findViewById(R.id.button5);
+        Button button_map = (Button)findViewById(R.id.button);
+        Button button_aboutApp = (Button)findViewById(R.id.button4);
+        button_map.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(myIntentMap);
+            }
+        });
+        button_aboutApp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(myIntent_about);
+            }
+        });
+        button_exit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finishAffinity();
+                System.exit(0);
+            }
+        });
     }
 }

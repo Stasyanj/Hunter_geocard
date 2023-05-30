@@ -19,10 +19,55 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:text="Hunter's geomap"
+        android:text="Hunter's Geomap"
         android:textSize="34sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="255dp"
+        android:layout_height="92dp"
+        android:layout_marginTop="50dp"
+        android:backgroundTint="@color/gray"
+        android:text="Открыть карту"
+        android:textColor="#000000"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageView" />
+
+    <Button
+        android:id="@+id/button4"
+        android:layout_width="255dp"
+        android:layout_height="92dp"
+        android:layout_marginTop="15dp"
+        android:backgroundTint="@color/gray"
+        android:text="О приложении"
+        android:textColor="#000000"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.512"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button" />
+
+    <Button
+        android:id="@+id/button5"
+        android:layout_width="255dp"
+        android:layout_height="92dp"
+        android:layout_marginTop="15dp"
+        android:backgroundTint="@color/gray"
+        android:text="Выход"
+        android:textColor="#000000"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button4" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
