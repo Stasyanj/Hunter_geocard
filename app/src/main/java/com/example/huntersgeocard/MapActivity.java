@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import android.content.Intent;
+import android.view.LayoutInflater;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -24,6 +25,8 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.app.Activity;
 import android.content.ContentResolver;
@@ -92,11 +95,55 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         btnLayer = findViewById(R.id.btnLayer);
         btnLayer.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                showCheckboxDialog();
+            public void onClick(View view) {
+                LayoutInflater li = LayoutInflater.from(MapActivity.this);
+                View promptView = li.inflate(R.layout.tool_back_layer, null);
+                AlertDialog.Builder mDialogBuilder = new AlertDialog.Builder(MapActivity.this);
+                mDialogBuilder.setTitle("Выберите необходимые слои");
+                mDialogBuilder.setView(promptView);
+                mDialogBuilder.show();
+                final CheckBox CheckA =promptView.findViewById(R.id.checkBoxA);
+                final CheckBox CheckB =promptView.findViewById(R.id.checkBoxB);
+                final CheckBox CheckV =promptView.findViewById(R.id.checkBoxV);
+                final CheckBox CheckG =promptView.findViewById(R.id.checkBoxG);
+                final Button btnSet = promptView.findViewById(R.id.button3);
+                final Button btnDel = promptView.findViewById(R.id.button6);
+                CheckA.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        if (isChecked)
+                            loadGeoData(1);
+                    }
+                });
+                CheckB.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                       if (isChecked)
+                           loadGeoData(2);
+                    }
+                });
+                CheckV.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                       if (isChecked)
+                           loadGeoData(3);
+                    }
+                });
+                CheckG.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        if (isChecked)
+                            loadGeoData(4);
+                    }
+                });
+                btnDel.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        loadGeoData(0);
+                    }
+                });
             }
         });
-
     }
 
     @Override
@@ -162,31 +209,6 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         }
     }
 
-    private void showCheckboxDialog() {
-        final String[] items = {"Зона А", "Зона Б", "Зона В", "Зона Г"};
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Выберите пункты").setMultiChoiceItems(items, null, new DialogInterface.OnMultiChoiceClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-
-                    }
-                })
-                .setPositiveButton("Готово", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        loadGeoData();
-                    }
-                })
-                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
-        AlertDialog dialog = builder.create();
-        dialog.show();
-    }
 
    // private void attachExternalDB() {
      //   File extStore = Environment.getExternalStorageDirectory();
@@ -195,16 +217,44 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
       //      throw new RuntimeException("Cannot find external DB " + extDbFile.getPath() + ". Probably external SD card is not mounted");
      //   }
   //  }
-    private void loadGeoData() {
+    private void loadGeoData(int intraw) {
+        FolderOverlay OverlayBuf = null;
+        int resint = intraw;
         KmlDocument kmlDocument = new KmlDocument();
         Drawable defaultMarker = getResources().getDrawable(org.osmdroid.bonuspack.R.drawable.marker_default);
         Bitmap defaultBitmap = ((BitmapDrawable) defaultMarker).getBitmap();
         Style defaultStyle = new Style(defaultBitmap, 0x901010AA, 5f, 0x20AA1010);
-        kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.amo), null);
-        FolderOverlay geoJsonOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(mMapView, defaultStyle, null, kmlDocument);
-        mMapView.getOverlays().add(geoJsonOverlay);
-        mMapView.invalidate();
-    }
+        if (resint == 1){
+          //  mMapView.getOverlays().remove(OverlayBuf);
+            kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.amo), null);
+            FolderOverlay geoJsonOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(mMapView, defaultStyle, null, kmlDocument);
+            mMapView.getOverlays().add(geoJsonOverlay);
+            mMapView.invalidate();
+            OverlayBuf = geoJsonOverlay;
+        }
+        if (resint == 2){
+            kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.bmo), null);
+            FolderOverlay geoJsonOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(mMapView, defaultStyle, null, kmlDocument);
+            mMapView.getOverlays().add(geoJsonOverlay);
+            mMapView.invalidate();
+        }
+       // if (resint == 3){
+           // kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.vmo), null);
+        //FolderOverlay geoJsonOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(mMapView, defaultStyle, null, kmlDocument);
+           // mMapView.getOverlays().add(geoJsonOverlay);
+           // mMapView.invalidate();
+      //  }
+      //  if (resint == 4){
+        //  kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.gmo), null);
+        // FolderOverlay geoJsonOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(mMapView, defaultStyle, null, kmlDocument);
+        //  mMapView.getOverlays().add(geoJsonOverlay);
+        //  mMapView.invalidate();
+       // }
+        if (resint == 0){
+            mMapView.getOverlays().remove(OverlayBuf);
+            mMapView.invalidate();
+                }
+            }
 
     public void onBackPressed(){
         Intent exit_intent = new Intent(MapActivity.this, MainActivity.class);
