@@ -12,6 +12,7 @@ import java.util.List;
 
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -73,6 +74,7 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         Configuration.getInstance().setUserAgentValue(String.valueOf(ctx));
     }
 
+    @SuppressLint("WrongConstant")
     @Override
     protected void onStart() {
         super.onStart();
