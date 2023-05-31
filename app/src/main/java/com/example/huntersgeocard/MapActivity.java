@@ -1,5 +1,7 @@
 package com.example.huntersgeocard;
 
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -8,36 +10,33 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+
+import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.view.View;
+import android.widget.Button;
 import android.view.LayoutInflater;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.Manifest;
 import android.app.AlertDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.view.View;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.app.Activity;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.BaseColumns;
@@ -57,20 +56,20 @@ import org.osmdroid.views.overlay.FolderOverlay;
 
 public class MapActivity extends AppCompatActivity implements LocationListener {
     private static final int PERMISSION_REQUEST_CODE = 1;
+    private static final int REQUEST_LOCATION = 99;
     private MapView mMapView;
     private IMapController mapController;
     private Marker currentLocationMarker;
     private LocationManager locationManager;
     private ImageButton btnLocate;
     private ImageButton btnLayer;
-
-
+    private String provider;
+    private Criteria criteria;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Context ctx = getApplicationContext();
-        //Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
         Configuration.getInstance().setUserAgentValue(String.valueOf(ctx));
     }
 
@@ -85,11 +84,22 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         btnLocate = findViewById(R.id.btnLocate);
         GeoPoint PrimaryPoint = new GeoPoint(53.91081, 27.58667);
         mapController.setCenter(PrimaryPoint);
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+        criteria.setCostAllowed(false);
+        provider = locationManager.getBestProvider(criteria, false);
+        if (ActivityCompat.checkSelfPermission(MapActivity.this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MapActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(MapActivity.this, new String[]
+                    {ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
+        }
+        final Location location = locationManager.getLastKnownLocation(provider);
         btnLocate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-                requestLocationUpdates();
+                if (location !=null){
+                    onLocationChanged(location);
+                }
             }
         });
         btnLayer = findViewById(R.id.btnLayer);
@@ -102,10 +112,10 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
                 mDialogBuilder.setTitle("Выберите необходимые слои");
                 mDialogBuilder.setView(promptView);
                 mDialogBuilder.show();
-                final CheckBox CheckA =promptView.findViewById(R.id.checkBoxA);
-                final CheckBox CheckB =promptView.findViewById(R.id.checkBoxB);
-                final CheckBox CheckV =promptView.findViewById(R.id.checkBoxV);
-                final CheckBox CheckG =promptView.findViewById(R.id.checkBoxG);
+                final CheckBox CheckA = promptView.findViewById(R.id.checkBoxA);
+                final CheckBox CheckB = promptView.findViewById(R.id.checkBoxB);
+                final CheckBox CheckV = promptView.findViewById(R.id.checkBoxV);
+                final CheckBox CheckG = promptView.findViewById(R.id.checkBoxG);
                 final Button btnSet = promptView.findViewById(R.id.button3);
                 final Button btnDel = promptView.findViewById(R.id.button6);
                 CheckA.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -118,15 +128,15 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
                 CheckB.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                       if (isChecked)
-                           loadGeoData(2);
+                        if (isChecked)
+                            loadGeoData(2);
                     }
                 });
                 CheckV.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                       if (isChecked)
-                           loadGeoData(3);
+                        if (isChecked)
+                            loadGeoData(3);
                     }
                 });
                 CheckG.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -145,30 +155,6 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
             }
         });
     }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (locationManager != null) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-            } else {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        PERMISSION_REQUEST_CODE);
-            }
-        }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (locationManager != null) {
-            locationManager.removeUpdates(this);
-        }
-    }
-
-    @Override
     public void onLocationChanged(Location location) {
         double latitude = location.getLatitude();
         double longitude = location.getLongitude();
@@ -181,42 +167,14 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         mapController.setCenter(startPoint);
         mMapView.invalidate();
     }
-
     @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
+    protected void onResume() {
+        super.onResume();
     }
-
     @Override
-    public void onProviderEnabled(String provider) {
+    protected void onPause() {
+        super.onPause();
     }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-    }
-
-    private void requestLocationUpdates() {
-        if (locationManager != null) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                if (location != null) {
-                    onLocationChanged(location);
-                }
-            } else {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        PERMISSION_REQUEST_CODE);
-            }
-        }
-    }
-
-
-   // private void attachExternalDB() {
-     //   File extStore = Environment.getExternalStorageDirectory();
-      //  File extDbFile = new File(extStore.getAbsolutePath() + "/" + "parma-dxf.sqlite");
-      //  if (!extDbFile.exists()) {
-      //      throw new RuntimeException("Cannot find external DB " + extDbFile.getPath() + ". Probably external SD card is not mounted");
-     //   }
-  //  }
     private void loadGeoData(int intraw) {
         FolderOverlay OverlayBuf = null;
         int resint = intraw;
@@ -225,7 +183,7 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         Bitmap defaultBitmap = ((BitmapDrawable) defaultMarker).getBitmap();
         Style defaultStyle = new Style(defaultBitmap, 0x901010AA, 5f, 0x20AA1010);
         if (resint == 1){
-          //  mMapView.getOverlays().remove(OverlayBuf);
+            //  mMapView.getOverlays().remove(OverlayBuf);
             kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.amo), null);
             FolderOverlay geoJsonOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(mMapView, defaultStyle, null, kmlDocument);
             mMapView.getOverlays().add(geoJsonOverlay);
@@ -238,24 +196,23 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
             mMapView.getOverlays().add(geoJsonOverlay);
             mMapView.invalidate();
         }
-       // if (resint == 3){
-           // kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.vmo), null);
+        // if (resint == 3){
+        // kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.vmo), null);
         //FolderOverlay geoJsonOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(mMapView, defaultStyle, null, kmlDocument);
-           // mMapView.getOverlays().add(geoJsonOverlay);
-           // mMapView.invalidate();
-      //  }
-      //  if (resint == 4){
+        // mMapView.getOverlays().add(geoJsonOverlay);
+        // mMapView.invalidate();
+        //  }
+        //  if (resint == 4){
         //  kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.gmo), null);
         // FolderOverlay geoJsonOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(mMapView, defaultStyle, null, kmlDocument);
         //  mMapView.getOverlays().add(geoJsonOverlay);
         //  mMapView.invalidate();
-       // }
+        // }
         if (resint == 0){
             mMapView.getOverlays().remove(OverlayBuf);
             mMapView.invalidate();
-                }
-            }
-
+        }
+    }
     public void onBackPressed(){
         Intent exit_intent = new Intent(MapActivity.this, MainActivity.class);
         startActivity(exit_intent);

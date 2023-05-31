@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/Zone_A"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Зона ведения охотничьего хозяйства преимущественно на диких копытных животных"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/Zone_B"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="зона ведения охотничьего хозяйства преимущественно на мелкую дичь"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/Zone_V"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Зона покоя"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/Zone_G"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="зона тренировки (натаски, нагонки, притравки и иного обучения) охотничьих собак, ловчих птиц и иних животных, используемых для охоты"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
