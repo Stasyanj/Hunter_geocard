@@ -12,7 +12,6 @@ import java.util.List;
 
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -66,6 +65,7 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
     private ImageButton btnLayer;
     private String provider;
     private Criteria criteria;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,7 +74,6 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         Configuration.getInstance().setUserAgentValue(String.valueOf(ctx));
     }
 
-    @SuppressLint("WrongConstant")
     @Override
     protected void onStart() {
         super.onStart();
@@ -87,19 +86,20 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         GeoPoint PrimaryPoint = new GeoPoint(53.91081, 27.58667);
         mapController.setCenter(PrimaryPoint);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        //////////////////////////////////////////////////////////////////////////////////
         criteria = new Criteria();
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
         criteria.setCostAllowed(false);
         provider = locationManager.getBestProvider(criteria, false);
-        if (ActivityCompat.checkSelfPermission(MapActivity.this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MapActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+        if (ActivityCompat.checkSelfPermission(MapActivity.this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MapActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(MapActivity.this, new String[]
                     {ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
         }
-        final Location location = locationManager.getLastKnownLocation(provider);
+        final Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         btnLocate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (location !=null){
+                if (location != null) {
                     onLocationChanged(location);
                 }
             }
@@ -157,9 +157,21 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
             }
         });
     }
+
     public void onLocationChanged(Location location) {
-        double latitude = location.getLatitude();
-        double longitude = location.getLongitude();
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        final Location locationChange = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        double latitude = locationChange.getLatitude();
+        double longitude = locationChange.getLongitude();
         GeoPoint startPoint = new GeoPoint(latitude, longitude);
         if (currentLocationMarker == null) {
             currentLocationMarker = new Marker(mMapView);
