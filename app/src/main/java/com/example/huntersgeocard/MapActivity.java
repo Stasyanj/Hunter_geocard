@@ -80,6 +80,7 @@ public class MapActivity extends AppCompatActivity {
     private ImageButton btnLocate;
     private ImageButton btnLayer;
     FusedLocationProviderClient fusedLocationProviderClient;
+    Location location;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,13 +105,6 @@ public class MapActivity extends AppCompatActivity {
         btnLocate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    Thread.sleep(10000);
-                }
-                catch (InterruptedException e)
-                {
-                    e.printStackTrace();
-                }
                     getCurrentLocation();
             }
         });
@@ -217,23 +211,33 @@ public class MapActivity extends AppCompatActivity {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        Task<Location> task = locationListener.
-        task.addOnSuccessListener(this, new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
+        location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        if (location != null) {
+            Marker currentLocationMarker = null;
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
+            GeoPoint LocPoint = new GeoPoint(latitude, longitude);
+            currentLocationMarker = new Marker(mMapView);
+            mMapView.getOverlays().add(currentLocationMarker);
+            currentLocationMarker.setPosition(LocPoint);
+            mapController.setCenter(LocPoint);
+            mMapView.invalidate();
+        } else {
+            location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            if (location != null){
                 Marker currentLocationMarker = null;
                 double latitude = location.getLatitude();
                 double longitude = location.getLongitude();
                 GeoPoint LocPoint = new GeoPoint(latitude, longitude);
-                if (currentLocationMarker == null) {
-                    currentLocationMarker = new Marker(mMapView);
-                    mMapView.getOverlays().add(currentLocationMarker);
-                }
+                currentLocationMarker = new Marker(mMapView);
+                mMapView.getOverlays().add(currentLocationMarker);
                 currentLocationMarker.setPosition(LocPoint);
                 mapController.setCenter(LocPoint);
                 mMapView.invalidate();
+            } else{
+                // error message
             }
-        });
+        }
     }
     private void checking(){
         LayoutInflater li = LayoutInflater.from(MapActivity.this);
