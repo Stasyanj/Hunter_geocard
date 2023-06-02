@@ -102,6 +102,13 @@ public class MapActivity extends AppCompatActivity {
         btnLocate = findViewById(R.id.btnLocate);
         GeoPoint PrimaryPoint = new GeoPoint(53.91081, 27.58667);
         mapController.setCenter(PrimaryPoint);
+        try {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ) {
+                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 101);
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
         btnLocate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -130,8 +137,8 @@ public class MapActivity extends AppCompatActivity {
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000 * 10,10, locationListener);
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000 * 10, 10, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,100, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 100, locationListener);
         checkEnabled();
     }
 
@@ -221,6 +228,7 @@ public class MapActivity extends AppCompatActivity {
             mMapView.getOverlays().add(currentLocationMarker);
             currentLocationMarker.setPosition(LocPoint);
             mapController.setCenter(LocPoint);
+            mapController.setZoom(16);
             mMapView.invalidate();
         } else {
             location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -233,6 +241,7 @@ public class MapActivity extends AppCompatActivity {
                 mMapView.getOverlays().add(currentLocationMarker);
                 currentLocationMarker.setPosition(LocPoint);
                 mapController.setCenter(LocPoint);
+                mapController.setZoom(16);
                 mMapView.invalidate();
             } else{
                 // error message
