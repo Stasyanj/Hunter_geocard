@@ -2,24 +2,37 @@ package com.example.huntersgeocard;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 
 
 import android.Manifest;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
 import android.location.Criteria;
-import android.location.Location;
+import android.location.Geocoder;
 import android.location.LocationListener;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Bundle;
+import android.location.Location;
 import android.location.LocationManager;
+import android.provider.Settings;
 import android.view.View;
+import android.widget.Toast;
 import android.widget.Button;
 import android.view.LayoutInflater;
 import android.graphics.Bitmap;
@@ -30,6 +43,7 @@ import android.os.Bundle;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
+import android.app.AlarmManager;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.database.ContentObserver;
@@ -43,28 +57,29 @@ import android.provider.BaseColumns;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.kml.KmlDocument;
 import org.osmdroid.bonuspack.kml.Style;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.Distance;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.FolderOverlay;
 
-
-public class MapActivity extends AppCompatActivity implements LocationListener {
-    private static final int PERMISSION_REQUEST_CODE = 1;
-    private static final int REQUEST_LOCATION = 99;
+public class MapActivity extends AppCompatActivity {
     private MapView mMapView;
-    private IMapController mapController;
-    private Marker currentLocationMarker;
     private LocationManager locationManager;
+    private IMapController mapController;
     private ImageButton btnLocate;
     private ImageButton btnLayer;
-    private String provider;
-    private Criteria criteria;
+    FusedLocationProviderClient fusedLocationProviderClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +87,7 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         setContentView(R.layout.activity_main);
         Context ctx = getApplicationContext();
         Configuration.getInstance().setUserAgentValue(String.valueOf(ctx));
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
     }
 
     @Override
@@ -85,80 +101,31 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         btnLocate = findViewById(R.id.btnLocate);
         GeoPoint PrimaryPoint = new GeoPoint(53.91081, 27.58667);
         mapController.setCenter(PrimaryPoint);
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        //////////////////////////////////////////////////////////////////////////////////
-        criteria = new Criteria();
-        criteria.setAccuracy(Criteria.ACCURACY_FINE);
-        criteria.setCostAllowed(false);
-        provider = locationManager.getBestProvider(criteria, false);
-        if (ActivityCompat.checkSelfPermission(MapActivity.this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MapActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(MapActivity.this, new String[]
-                    {ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
-        }
-        final Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         btnLocate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (location != null) {
-                    onLocationChanged(location);
+                try {
+                    Thread.sleep(10000);
                 }
+                catch (InterruptedException e)
+                {
+                    e.printStackTrace();
+                }
+                    getCurrentLocation();
             }
         });
         btnLayer = findViewById(R.id.btnLayer);
         btnLayer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                LayoutInflater li = LayoutInflater.from(MapActivity.this);
-                View promptView = li.inflate(R.layout.tool_back_layer, null);
-                AlertDialog.Builder mDialogBuilder = new AlertDialog.Builder(MapActivity.this);
-                mDialogBuilder.setTitle("Выберите необходимые слои");
-                mDialogBuilder.setView(promptView);
-                mDialogBuilder.show();
-                final CheckBox CheckA = promptView.findViewById(R.id.checkBoxA);
-                final CheckBox CheckB = promptView.findViewById(R.id.checkBoxB);
-                final CheckBox CheckV = promptView.findViewById(R.id.checkBoxV);
-                final CheckBox CheckG = promptView.findViewById(R.id.checkBoxG);
-                final Button btnSet = promptView.findViewById(R.id.button3);
-                final Button btnDel = promptView.findViewById(R.id.button6);
-                CheckA.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                    @Override
-                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        if (isChecked)
-                            loadGeoData(1);
-                    }
-                });
-                CheckB.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                    @Override
-                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        if (isChecked)
-                            loadGeoData(2);
-                    }
-                });
-                CheckV.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                    @Override
-                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        if (isChecked)
-                            loadGeoData(3);
-                    }
-                });
-                CheckG.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                    @Override
-                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        if (isChecked)
-                            loadGeoData(4);
-                    }
-                });
-                btnDel.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        loadGeoData(0);
-                    }
-                });
+                checking();
             }
         });
     }
 
-    public void onLocationChanged(Location location) {
+    @Override
+    protected void onResume() {
+        super.onResume();
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -169,26 +136,22 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        final Location locationChange = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        double latitude = locationChange.getLatitude();
-        double longitude = locationChange.getLongitude();
-        GeoPoint startPoint = new GeoPoint(latitude, longitude);
-        if (currentLocationMarker == null) {
-            currentLocationMarker = new Marker(mMapView);
-            mMapView.getOverlays().add(currentLocationMarker);
-        }
-        currentLocationMarker.setPosition(startPoint);
-        mapController.setCenter(startPoint);
-        mMapView.invalidate();
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000 * 10,10, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000 * 10, 10, locationListener);
+        checkEnabled();
     }
-    @Override
-    protected void onResume() {
-        super.onResume();
+
+    private void checkEnabled() {
+        locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
     }
+
     @Override
     protected void onPause() {
         super.onPause();
+        locationManager.removeUpdates(locationListener);
     }
+
     private void loadGeoData(int intraw) {
         FolderOverlay OverlayBuf = null;
         int resint = intraw;
@@ -196,7 +159,7 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         Drawable defaultMarker = getResources().getDrawable(org.osmdroid.bonuspack.R.drawable.marker_default);
         Bitmap defaultBitmap = ((BitmapDrawable) defaultMarker).getBitmap();
         Style defaultStyle = new Style(defaultBitmap, 0x901010AA, 5f, 0x20AA1010);
-        if (resint == 1){
+        if (resint == 1) {
             //  mMapView.getOverlays().remove(OverlayBuf);
             kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.amo), null);
             FolderOverlay geoJsonOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(mMapView, defaultStyle, null, kmlDocument);
@@ -204,7 +167,7 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
             mMapView.invalidate();
             OverlayBuf = geoJsonOverlay;
         }
-        if (resint == 2){
+        if (resint == 2) {
             kmlDocument.parseKMLStream(getResources().openRawResource(R.raw.bmo), null);
             FolderOverlay geoJsonOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(mMapView, defaultStyle, null, kmlDocument);
             mMapView.getOverlays().add(geoJsonOverlay);
@@ -222,13 +185,103 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         //  mMapView.getOverlays().add(geoJsonOverlay);
         //  mMapView.invalidate();
         // }
-        if (resint == 0){
+        if (resint == 0) {
             mMapView.getOverlays().remove(OverlayBuf);
             mMapView.invalidate();
         }
     }
-    public void onBackPressed(){
+
+    public void onBackPressed() {
         Intent exit_intent = new Intent(MapActivity.this, MainActivity.class);
         startActivity(exit_intent);
+    }
+    private LocationListener locationListener = new LocationListener() {
+
+        @Override
+        public void onLocationChanged(Location location) {
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+        }
+    };
+    private void getCurrentLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        Task<Location> task = locationListener.
+        task.addOnSuccessListener(this, new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                Marker currentLocationMarker = null;
+                double latitude = location.getLatitude();
+                double longitude = location.getLongitude();
+                GeoPoint LocPoint = new GeoPoint(latitude, longitude);
+                if (currentLocationMarker == null) {
+                    currentLocationMarker = new Marker(mMapView);
+                    mMapView.getOverlays().add(currentLocationMarker);
+                }
+                currentLocationMarker.setPosition(LocPoint);
+                mapController.setCenter(LocPoint);
+                mMapView.invalidate();
+            }
+        });
+    }
+    private void checking(){
+        LayoutInflater li = LayoutInflater.from(MapActivity.this);
+        View promptView = li.inflate(R.layout.tool_back_layer, null);
+        AlertDialog.Builder mDialogBuilder = new AlertDialog.Builder(MapActivity.this);
+        mDialogBuilder.setTitle("Выберите необходимые слои");
+        mDialogBuilder.setView(promptView);
+        mDialogBuilder.show();
+        final CheckBox CheckA = promptView.findViewById(R.id.checkBoxA);
+        final CheckBox CheckB = promptView.findViewById(R.id.checkBoxB);
+        final CheckBox CheckV = promptView.findViewById(R.id.checkBoxV);
+        final CheckBox CheckG = promptView.findViewById(R.id.checkBoxG);
+        final Button btnSet = promptView.findViewById(R.id.button3);
+        final Button btnDel = promptView.findViewById(R.id.button6);
+        CheckA.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked)
+                    loadGeoData(1);
+            }
+        });
+        CheckB.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked)
+                    loadGeoData(2);
+            }
+        });
+        CheckV.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked)
+                    loadGeoData(3);
+            }
+        });
+        CheckG.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked)
+                    loadGeoData(4);
+            }
+        });
+        btnDel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                loadGeoData(0);
+            }
+        });
+
     }
 }
